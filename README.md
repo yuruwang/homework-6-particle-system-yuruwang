@@ -36,6 +36,7 @@ As always, the artistic merit of your project plays a small role in your grade. 
 ## Extra credit (50 points max)
 * (5 - 15 points) Allow the user to place attractors and repulsors in the scene that influence the motion of the particles. The more variations of influencers you add, the more points you'll receive. Consider adding influencers that do not act uniformly in all directions, or that are not simply points in space but volumes. They should be visible in the scene in some manner.
 * (7 points) Have particles stretch along their velocity vectors to imitate motion blur.
+* (5 - 15 points) Allow particles to collide with and bounce off of obstacles in the scene. The more complex the shapes you collide particles with, the more points you'll earn.
 * (30 points) Animate a mesh and have the particles move along with the animation.
 * (15 points) Create a "flocking" mode for your scene where a smaller collection of particles moves around the environment following the [rules for flocking](https://en.wikipedia.org/wiki/Boids).
 * (15 points) Use audio to drive an attribute of your particles, whether that be color, velocity, size, shape, or something else!
