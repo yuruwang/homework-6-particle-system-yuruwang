@@ -30,7 +30,7 @@ You can map these (u, v) coordinates to a point on any triangle using this metho
 
 Consider pre-generating these mesh attractor points at load time so your program runs in real time as you swap out meshes.
 
-##\~\*\~\*\~A E S T H E T I C\~\*\~\*\~ (10 points)
+## \~\*\~\*\~A E S T H E T I C\~\*\~\*\~ (10 points)
 As always, the artistic merit of your project plays a small role in your grade. The more interesting, varied, and procedural your project is, the higher your grade will be. Go crazy, make it vaporwave themed or something! Don't neglect the background of your scene; a static gray backdrop is pretty boring!
 
 ## Extra credit (50 points max)
