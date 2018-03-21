@@ -13,13 +13,20 @@ import mesh from './mesh';
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const PI = 3.14159;
-let crowMesh = loadObj('./src/obj/carMaya.obj');
-let crow = new Mesh(crowMesh);
+
+let dogMesh = loadObj('./src/obj/dogMaya.obj');
+let catMesh = loadObj('./src/obj/catMaya.obj');
+let deerMesh = loadObj('./src/obj/deerMaya.obj');
+let cowMesh = loadObj('./src/obj/cowMaya.obj');
+let dog = new Mesh(dogMesh);
+let cat = new Mesh(catMesh);
+let deer = new Mesh(deerMesh);
+let cow = new Mesh(cowMesh);
 
 //---------------------
 let maxForce = 10;
 let forceRadius = 100;
-let slowdownRadius = 10;
+let slowdownRadius = 2;
 let force = vec3.fromValues(0, 0, 0);
 let forceDir = vec3.fromValues(0, 0, 0);
 let dist = vec3.fromValues(0, 0, 0);
@@ -27,8 +34,9 @@ let dist = vec3.fromValues(0, 0, 0);
 
 
 const controls = {
-  mesh: ['crow', 'sphere'],
-  cameraControl: ['on', 'off'],
+  mesh: ['dog', 'cat', 'deer', 'cow'],
+  particles: 40,
+  mass: 10,
 };
 
 let square: Square;
@@ -36,14 +44,18 @@ let time: number = 0.0;
 let particels: Array<Particle>;
 let offsetsArray: Array<number>;
 let colorsArray: Array<number>;
-let n = 50;
+let n = 40;
+let mass = 10;
 
 let mousePos = vec2.fromValues(0, 0);
 let mousedown: boolean;
-let forceP = vec3.fromValues(50, 50, 0);
+let forceP = vec3.fromValues(0, 0, 0);
 let selectedMesh: Mesh;
 let cameraActive = true;
-let dragActive = true;
+let dragActive = false;
+let repel = false;
+let repelCount = 100;
+let cameraStat = new Camera(vec3.fromValues(0, 0, 0), vec3.fromValues(0, 0, 0));
 
 function loadScene() {
   // creat square drawable
@@ -51,81 +63,16 @@ function loadScene() {
   square.create();
 
   particels = new Array<Particle>();
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      // let mass = Math.random() * 100 + 10000;\
-      let mass = Math.random() * 10;
-      let particle = new Particle(mass, vec3.fromValues(i, j, 0), vec3.fromValues(0, 0, 0), vec3.fromValues(0, 0, 0), vec4.fromValues(i / n, j / n, 0, 1));
+  for (let i = -n / 2; i < n / 2; i++) {
+    for (let j = -n / 2; j < n / 2; j++) {
+      let particelMass = mass;
+      let particle = new Particle(particelMass, vec3.fromValues(i, j, 0), vec3.fromValues(0, 0, 0), vec3.fromValues(0, 0, 0), vec4.fromValues(i / n, j / n, 0, 1));
       particels.push(particle);
     }
     
   }
   
 }
-
-// function updateScene(deltaT: number) {
-//   // might be slow??
-//   offsetsArray = new Array<number>();
-//   colorsArray = new Array<number>();
-
-
-//   for (let i = 0; i < particels.length; i++) {
-//     let particle = particels[i];
-
-//     if (selectedMesh == null) {
-//       // forceP = vec3.fromValues(25, 25, 0);
-//     } else {
-//       let vertNum = selectedMesh.vertList.length;
-
-//       if (i < vertNum) {
-//         forceP = selectedMesh.vertList[i];
-//       } else {
-//         forceP = vec3.fromValues(25, 25, 0);
-//       }
-//     }
-
-
-//     vec3.subtract(dist, forceP, particle.pos);
-//     vec3.normalize(forceDir, dist);
-
-//     // force become stronger when particle close to the force point
-//     if (vec3.length(dist) < forceRadius) {
-//       vec3.scale(force, forceDir, maxForce * (1 - vec3.length(dist) / forceRadius));
-//     } else {
-//       vec3.scale(force, forceDir, 0.1);
-//     }
-    
-
-
-//     // update particle position based on the force
-//     if (mousedown) {
-//       // if the particle is very close to the force point, stop moving
-//       if (vec3.length(dist) < slowdownRadius) {
-//         particle.slowdown(vec3.length(dist) / slowdownRadius, deltaT);
-      
-//       } else {
-//         particle.update(forceDir, deltaT);
-//       }
-
-//     }
-
-
-//     offsetsArray.push(particle.pos[0]);
-//     offsetsArray.push(particle.pos[1]);
-//     offsetsArray.push(particle.pos[2]);
-
-//     colorsArray.push(particle.col[0]);
-//     colorsArray.push(particle.col[1]);
-//     colorsArray.push(particle.col[2]);
-//     colorsArray.push(particle.col[3]);
-
-//     let offsets: Float32Array = new Float32Array(offsetsArray);
-//     let colors: Float32Array = new Float32Array(colorsArray);
-//     square.setInstanceVBOs(offsets, colors);
-//     square.setNumInstances(n * n);
-
-//   }
-// }
 
 function updateScene(deltaT: number) {
   // might be slow??
@@ -136,7 +83,62 @@ function updateScene(deltaT: number) {
   for (let i = 0; i < particels.length; i++) {
     let particle = particels[i];
 
-    particle.update(vec3.fromValues(0, 0, 0), deltaT);
+    if (selectedMesh == null) {
+      // forceP = vec3.fromValues(25, 25, 0);
+      slowdownRadius = 5;
+    } else {
+      slowdownRadius = 2;
+
+      let vertNum = selectedMesh.vertList.length;
+
+      if (i < vertNum) {
+        forceP = selectedMesh.vertList[i];
+      } else {
+        forceP = vec3.fromValues(0, 0, 0);
+      }
+      // forceP = selectedMesh.vertList[i % vertNum];
+    }
+
+
+    vec3.subtract(dist, forceP, particle.pos);
+    vec3.normalize(forceDir, dist);
+
+
+    // force become stronger when particle close to the force point
+    if (vec3.length(dist) < forceRadius) {
+      vec3.scale(force, forceDir, maxForce * (1 - vec3.length(dist) / forceRadius));
+    } else {
+      vec3.scale(force, forceDir, 0.1);
+    }
+
+    
+
+
+    if (vec3.length(dist) < slowdownRadius) {
+      if (repel && repelCount > 0) {
+        // repel
+        vec3.subtract(dist, particle.pos, forceP);
+        vec3.normalize(forceDir, dist);
+
+        if (vec3.length(dist) > forceRadius) {
+          force = vec3.fromValues(0, 0, 0);
+        } else {
+          vec3.scale(force, forceDir, 10);
+        }
+
+        particle.update(force, deltaT);
+      } else {
+        particle.slowdown(0.001 * vec3.length(dist) / slowdownRadius, deltaT); 
+      }
+      
+    } else {
+      particle.update(forceDir, deltaT);
+    }
+
+    if (vec3.length(particle.vel) > 3) {
+      particle.slowdown(0.0001, deltaT);
+    }
+
 
 
     offsetsArray.push(particle.pos[0]);
@@ -198,27 +200,40 @@ function main() {
   // Add controls to the gui
   const gui = new DAT.GUI();
 
-  var meshControl = gui.add(controls, 'mesh', ['none', 'crow', 'sphere']);
-  var cameraControl = gui.add(controls, 'cameraControl', ['on', 'off']);
+  var meshControl = gui.add(controls, 'mesh', ['none', 'dog', 'cat', 'deer', 'cow']);
+  var particleControl = gui.add(controls, 'particles', 10, 50);
+  var massControl = gui.add(controls, 'mass', 1, 10);
 
   meshControl.onChange(function(value: string) {
     if (value === "none") {
       selectedMesh = null;
-    } else if (value === "crow") {
-      selectedMesh = crow;
-    } else if (value === "sphere") {
-
+    } else if (value === "dog") {
+      resetVel();
+      selectedMesh = dog;
+    } else if (value === "cat") {
+      resetVel();
+      selectedMesh = cat;
+    } else if (value === "deer") {
+      resetVel();
+      selectedMesh = deer;
+    } else if (value === "cow") {
+      resetVel();
+      selectedMesh = cow;
     }
+
 
   });
 
-  cameraControl.onChange(function(value: string) {
-    if (value === "on") {
-      cameraActive = true;
-    } else if (value === "off") {
-      cameraActive = false;
-      console.log("off");
-    } 
+
+  particleControl.onChange(function(value: number) {
+    n = value;
+    loadScene();
+
+  });
+
+  massControl.onChange(function(value: number) {
+    mass = value;
+    loadScene();
 
   });
 
@@ -235,7 +250,7 @@ function main() {
   // Initial call to load scene
   loadScene();
 
-  const camera = new Camera(vec3.fromValues(0, 0, 0), vec3.fromValues(25, 25, 0));
+  const camera = new Camera(vec3.fromValues(0, 0, 50), vec3.fromValues(0, 0, 0));
 
   const renderer = new OpenGLRenderer(canvas);
   renderer.setClearColor(0.2, 0.2, 0.2, 1);
@@ -252,10 +267,20 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
   ]);
 
+
   // This function will be called every frame
   function tick() {
+    if (repel) {
+      repelCount--;
+    }
 
-    camera.update();
+    if (cameraActive) {
+      // retrive camera attr
+      camera.update();
+    }
+    
+
+  
 
     stats.begin();
     lambert.setTime(time++);
@@ -269,6 +294,7 @@ function main() {
     renderer.render(camera, lambert, [
       square,
     ]);
+
     stats.end();
 
     // Tell the browser to call `tick` again whenever it renders a new frame
@@ -285,6 +311,10 @@ function main() {
     mousePos[0] = event.clientX;
     mousePos[1] = canvas.height - event.clientY;
 
+    // if (dragActive) {
+    //   calculateForceP();
+    // }
+
   });
 
   canvas.addEventListener("mousedown", function(event: any) {
@@ -296,11 +326,13 @@ function main() {
     } else if (event.button === 2) {
       cameraActive = false;
       dragActive = true;
+      repel = false;
+      calculateForceP();
     }
 
     mousePos[0] = event.clientX;
     mousePos[1] = canvas.height - event.clientY;
-    calculateForceP();
+
   });
 
 
@@ -311,8 +343,10 @@ function main() {
       cameraActive = true;
       dragActive = false;
     } else if (event.button === 2) {
-      cameraActive = false;
-      dragActive = true;
+      cameraActive = true;
+      dragActive = false;
+      repel = true;
+      repelCount = 100;
     }
 
     // calculateForceP();
@@ -320,8 +354,6 @@ function main() {
   })
 
   function calculateForceP() {
-    console.log("canvas.width, height = " + canvas.width + "," + canvas.height);
-    console.log("mouse. x, y = " + mousePos[0] + "," + mousePos[1]);
 
     let ndc = vec2.fromValues(mousePos[0] / canvas.width, mousePos[1] / canvas.height);
     ndc[0] = ndc[0] * 2 - 1;
@@ -341,6 +373,12 @@ function main() {
     forceP = vec3.add(forceP, camera.target, vec3.scale(h, H, ndc[0]));
     forceP = vec3.add(forceP, forceP, vec3.scale(v, V, ndc[1]));
   } 
+
+  function resetVel() {
+    particels.forEach(function(particle: Particle) {
+      particle.stopMoving();
+    });
+  }
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.setAspectRatio(window.innerWidth / window.innerHeight);

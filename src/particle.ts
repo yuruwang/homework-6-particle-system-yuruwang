@@ -38,6 +38,7 @@ class Particle {
         if (vec3.length(this.vel) < 0.05) {
             this.randomMoving(deltaT);
         }
+
     }
 
     public randomMoving(deltaT: number) {

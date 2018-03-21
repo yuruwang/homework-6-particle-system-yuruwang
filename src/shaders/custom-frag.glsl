@@ -15,7 +15,7 @@ void main()
     vec3 c = vec3(0.680, 0.680, 0.680);
     vec3 d = vec3(-0.202, 0.132, -0.172);
 
-    vec3 color = a * b * cos(2.0 * 3.1415 * (c * fs_time * 0.01 + d));
+    vec3 color = a * b * cos(2.0 * 3.1415 * (c * fs_time * 0.05 + d));
     float dist = 1.0 - (length(fs_Pos.xyz) * 2.0);
     // out_Col = vec4(dist) * fs_Col;
     out_Col = vec4(dist) * vec4(color, 1.0);
